@@ -1,0 +1,763 @@
+/*
+Name: Sifat Hossain
+ID: 232-35-258
+*/
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#define MAX_MEDICINES 1000
+#define MAX_CUSTOMERS 1000
+#define MAX_NAME_LEN 1000
+#define MAX_EMAAIL_LEN 1000
+#define MAX_CART 100
+#define FILE_PATH "C:\\Users\\HP\\Desktop\\Projrct\\Final\\"
+
+struct Medicine
+{
+    int id;
+    char name[MAX_NAME_LEN];
+    char email[MAX_EMAAIL_LEN];
+    float price;
+    int quantity;
+};
+
+struct Customer
+{
+    char username[MAX_NAME_LEN];
+    char password[MAX_NAME_LEN];
+    char email[MAX_EMAAIL_LEN];
+};
+
+struct Medicine medicines[MAX_MEDICINES];
+struct Customer customers[MAX_CUSTOMERS];
+struct Medicine cart[MAX_CART];
+int totalMedicines = 0, totalCustomers = 0, cartSize = 0;
+
+void clearScreen()
+{
+#ifdef _WIN32
+    system("cls");
+#else
+    system("clear");
+#endif
+}
+
+void loadCustomers()
+{
+    FILE *file = fopen(FILE_PATH "customers.txt", "r");
+    if (file == NULL) return;
+    while (fscanf(file, "%s %s %s", customers[totalCustomers].username,
+                  customers[totalCustomers].password, customers[totalCustomers].email) != EOF)
+    {
+        totalCustomers++;
+    }
+    fclose(file);
+}
+
+void saveCustomers()
+{
+    FILE *file = fopen(FILE_PATH "customers.txt", "w");
+    if (file == NULL)
+    {
+        printf("Error saving customers.\n");
+        return;
+    }
+    for (int i = 0; i < totalCustomers; i++)
+    {
+        fprintf(file, "%s %s %s\n", customers[i].username, customers[i].password, customers[i].email);
+    }
+    fclose(file);
+}
+
+void displayMedicines()
+{
+    clearScreen();
+    if (totalMedicines == 0)
+    {
+        printf("Medicine don't available.\n\n");
+        printf("-------------------------\n");
+        return;
+    }
+    printf("Available Medicines:\n");
+    printf("%-10s %-30s %-10s %-10s\n", "ID", "Name", "Price", "Quantity");
+    for (int i = 0; i < totalMedicines; i++)
+    {
+        printf("%-10d %-30s %-10.2f %-10d\n", medicines[i].id, medicines[i].name, medicines[i].price,
+               medicines[i].quantity);
+    }
+}
+
+void registerCustomer()
+{
+    char username[MAX_NAME_LEN];
+    char email[MAX_EMAAIL_LEN];
+    int isUnique;
+    do
+    {
+        isUnique = 1;
+        printf("Enter username: ");
+        scanf("%s", username);
+        for (int i = 0; i < totalCustomers; i++)
+        {
+            if (strcmp(customers[i].username, username) == 0)
+            {
+                isUnique = 0;
+
+                printf("Error: Username already exists. Please choose a different username.\n");
+                break;
+            }
+        }
+    }while (!isUnique);
+    clearScreen();
+
+    do
+    {
+        isUnique = 1;
+        printf("Enter email address: ");
+        scanf("%s", email);
+
+
+        for (int i = 0; i < totalCustomers; i++)
+        {
+            if (strcmp(customers[i].email, email) == 0)
+            {
+                isUnique = 0;
+                printf("Error: Email address already exists. Please use a different email.\n");
+                break;
+            }
+        }
+    } while (!isUnique);
+    clearScreen();
+
+    strcpy(customers[totalCustomers].username, username);
+    strcpy(customers[totalCustomers].email, email);
+
+    printf("Enter password: ");
+    scanf("%s", customers[totalCustomers].password);
+
+    totalCustomers++;
+    saveCustomers();
+    clearScreen();
+    printf("------------ Registration successful! -------------\n\n");
+}
+
+
+int cnt = 0;
+int loginCustomer()
+{
+    char username[MAX_NAME_LEN], password[MAX_NAME_LEN];
+    printf("Enter username: ");
+    scanf("%s", username);
+    printf("Enter password: ");
+    scanf("%s", password);
+
+    for (int i = 0; i < totalCustomers; i++)
+    {
+        if (strcmp(customers[i].username, username) == 0 && strcmp(customers[i].password, password) == 0)
+        {
+            cnt = i;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void addToCart()
+{
+    clearScreen();
+    if (totalMedicines == 0){
+        displayMedicines();
+        return;
+    }
+    displayMedicines();
+    int id, found = 0;
+    printf("Enter Medicine ID to add to cart: ");
+    scanf("%d", &id);
+    clearScreen();
+    for (int i = 0; i < totalMedicines; i++)
+    {
+        if (medicines[i].id == id)
+        {
+            if (medicines[i].quantity > 0)
+            {
+                cart[cartSize++] = medicines[i];
+                saveMedicines();
+                printf("Medicine added to cart!\n");
+                for (int j = 0; j < cartSize; j++)
+                {
+                    printf("ID: %d, Name: %s, Price: %.2f\n", cart[j].id, cart[j].name, cart[j].price);
+                }
+            }
+            else
+            {
+                printf("Medicine is out of stock!\n");
+            }
+            found = 1;
+            break;
+        }
+    }
+    if (!found)
+    {
+        printf("Medicine ID not found!\n");
+    }
+    printf("\n-------------------------\n");
+}
+
+void deleteFromCart()
+{
+    clearScreen();
+        if (cartSize == 0)
+        {
+            printf("Your cart is empty.\n\n");
+            printf("-------------------\n");
+            return 0;
+        }
+        else
+        {
+            for (int j = 0; j < cartSize; j++)
+            {
+                printf("ID: %d, Name: %s, Price: %.2f\n", cart[j].id, cart[j].name, cart[j].price);
+            }
+            printf("\n-------------------------\n");
+        }
+    int id, found = 0;
+    printf("Enter Medicine ID to delete from cart: ");
+    scanf("%d", &id);
+    for (int i = 0; i < cartSize; i++)
+    {
+        if (cart[i].id == id)
+        {
+            for (int j = i; j < cartSize- 1; j++)
+            {
+                cart[j] = cart[j + 1];
+            }
+            cartSize--;
+            saveMedicines();
+            printf("Medicine deleted from cart!\n");
+            found = 1;
+            break;
+        }
+    }
+    if (!found)
+    {
+        printf("Medicine not found in cart!\n");
+    }
+    printf("\n-------------------------\n");
+}
+
+void viewCart()
+{
+    clearScreen();
+    if (cartSize == 0)
+    {
+        printf("Your cart is empty.\n\n");
+        printf("-------------------\n");
+    }
+    else
+    {
+        for (int i = 0; i < cartSize; i++)
+        {
+            printf("ID: %d, Name: %s, Price: %.2f\n", cart[i].id, cart[i].name, cart[i].price);
+        }
+        printf("\n---------------------------\n");
+    }
+}
+
+/*
+Name: Md. Mohaiminul Islam
+ID: 232-35-376
+*/
+
+void loadMedicines()
+{
+    FILE *file = fopen(FILE_PATH "medicines.txt", "r");
+    if (file == NULL) return;
+    while (fscanf(file, "%d %s %f %d", &medicines[totalMedicines].id, medicines[totalMedicines].name,
+                  &medicines[totalMedicines].price, &medicines[totalMedicines].quantity) != EOF)
+    {
+        totalMedicines++;
+    }
+    fclose(file);
+}
+
+void saveMedicines()
+{
+    FILE *file = fopen(FILE_PATH "medicines.txt", "w");
+    if (file == NULL)
+    {
+        printf("Error saving medicines.\n");
+        return;
+    }
+    for (int i = 0; i < totalMedicines; i++)
+    {
+        fprintf(file, "%d %s %.2f %d\n", medicines[i].id, medicines[i].name, medicines[i].price,
+                medicines[i].quantity);
+    }
+    fclose(file);
+}
+
+int loginPharmacist()
+{
+    char password[MAX_NAME_LEN];
+    printf("Enter pharmacist password: ");
+    scanf("%s", password);
+    if (strcmp(password, "2024") == 0)
+    {
+        return 1;
+    }
+    return 0;
+}
+
+void forgotPassword()
+{   clearScreen();
+    char username[MAX_NAME_LEN];
+    char email[MAX_EMAAIL_LEN];
+    int found = 0;
+    printf("------- Please provide accurate information for recover your account password -------\n\n");
+    printf("Enter your username: ");
+    scanf("%s", username);
+    printf("Enter your email address: ");
+    scanf("%s", email);
+
+
+    for (int i = 0; i < totalCustomers; i++)
+    {
+        if (strcmp(customers[i].username, username) == 0 && strcmp(customers[i].email, email) == 0)
+        {
+            found = 1;
+            printf("\nPassword recovery has been successful!\n");
+            printf("Your password is: %s\n", customers[i].password);
+            break;
+        }
+    }
+
+    if (!found)
+    {
+        printf("\nError: No matching account found with the provided username and email.\n");
+    }
+    printf("\n---------------------------------------\n");
+}
+
+void buyMedicine()
+{
+    clearScreen();
+    float totalBill = 0;
+    FILE *file = fopen(FILE_PATH "buy_details.txt", "a");
+    if (file == 0)
+    {
+        printf("Error saving buy details.\n");
+        return;
+    }
+
+    for (int i = 0; i < cartSize; i++)
+    {
+        for (int j = 0; j < totalMedicines; j++)
+        {
+            if (medicines[j].id == cart[i].id)
+            {
+                if (medicines[j].quantity > 0)
+                {
+                    medicines[j].quantity--;
+                    totalBill += cart[i].price;
+                }
+                else
+                {
+                    printf("Not enough stock for %s!\n", cart[i].name);
+                    fclose(file);
+                    return;
+                }
+            }
+        }
+    }
+    if(totalBill == 0.0){
+        printf("Medicine has not been added!\n\n");
+        printf("----------------------------\n");
+        return 0;
+    }
+    fprintf(file, "Customer: %s, Total Bill: %.2f\n", customers[totalCustomers - (totalCustomers - cnt)].username, totalBill);
+    for (int j = 0; j < cartSize; j++)
+    {
+        fprintf(file, "  ID: %d, Name: %s, Price: %.2f\n", cart[j].id, cart[j].name, cart[j].price);
+    }
+    fprintf(file, "  -----------------------------\n");
+    fclose(file);
+    saveMedicines();
+    cartSize = 0;
+    printf("Your total bill is %.2f\nThank you for your purchase!\n\n", totalBill);
+    printf("-----------------------------\n");
+}
+
+void logout()
+{
+    clearScreen();
+    printf("--------- Successfully Logged Out ----------\n\n");
+}
+
+void addMedicine()
+{
+    clearScreen();
+    displayMedicines();
+    struct Medicine newMedicine;
+    int id, idExists = 0;
+    do
+    {
+        printf("\nAdd Medicine here - ");
+        printf("\nEnter Medicine ID: ");
+        scanf("%d", &id);
+        idExists = 0;
+        for (int i = 0; i < totalMedicines; i++)
+        {
+            if (medicines[i].id == id)
+            {
+                idExists = 1;
+                printf("Error: Medicine ID already exists. Please enter a different ID.\n");
+                break;
+            }
+        }
+    }
+    while (idExists);
+    newMedicine.id = id;
+    printf("Enter Medicine Name: ");
+    scanf("%s",&newMedicine.name);
+    printf("Enter Medicine Price: ");
+    scanf("%f", &newMedicine.price);
+    printf("Enter Medicine Quantity: ");
+    scanf("%d", &newMedicine.quantity);
+    medicines[totalMedicines++] = newMedicine;
+    saveMedicines();
+    clearScreen();
+    printf("Medicine added successfully!\n");
+    printf("\n---------------------------\n");
+}
+
+/*
+MD. Fahim Reza
+Id: 232-35-477
+*/
+
+
+void deleteMedicine()
+{
+    clearScreen();
+    if (totalMedicines == 0)
+    {
+        printf("Medicine don't available for delete.\n\n");
+        printf("------------------------------------\n");
+        return 0;
+    }
+    displayMedicines();
+    int id, found = 0;
+    printf("Enter Medicine ID to delete: ");
+    scanf("%d", &id);
+    for (int i = 0; i < totalMedicines; i++)
+    {
+        if (medicines[i].id == id)
+        {
+            found = 1;
+            for (int j = i; j < totalMedicines- 1; j++)
+            {
+                medicines[j] = medicines[j + 1];
+            }
+            totalMedicines--;
+            saveMedicines();
+            printf("Medicine deleted successfully!\n");
+            break;
+        }
+    }
+    if (!found)
+    {
+        printf("Medicine ID not found!\n");
+    }
+    printf("\n---------------------\n");
+}
+
+void searchMedicine()
+{
+    clearScreen();
+    if (totalMedicines == 0)
+    {
+        printf("No medicines available to search.\n\n");
+        printf("---------------------------------\n");
+        return;
+    }
+
+    char searchName[MAX_NAME_LEN];
+    int found = 0;
+
+    printf("Enter the name of the medicine to search: ");
+    scanf("%s", searchName);
+
+    clearScreen();
+
+    printf("Search Results:\n");
+
+    for (int i = 0; i < totalMedicines; i++)
+    {
+        if (strstr(medicines[i].name, searchName) != NULL)
+        {
+            printf("%-10s %-30s %-10s %-10s\n", "ID", "Name", "Price", "Quantity");
+            printf("%-10d %-30s %-10.2f %-10d\n", medicines[i].id, medicines[i].name, medicines[i].price, medicines[i].quantity);
+            found = 1;
+        }
+    }
+
+    if (!found)
+    {
+        printf("\nNo medicines found with the name \"%s\".\n", searchName);
+        printf("Please try again capitalizing the first letter or change the name.\n");
+    }
+
+    printf("\n----------------------------------\n");
+}
+
+void updateMedicine()
+{
+    clearScreen();
+    if (totalMedicines == 0){
+        displayMedicines();
+        return;
+    }
+    displayMedicines();
+    int id, found = 0;
+    printf("Enter Medicine ID to update: ");
+    scanf("%d", &id);
+    for (int i = 0; i < totalMedicines; i++)
+    {
+        if (medicines[i].id == id)
+        {
+            found = 1;
+            printf("Enter new price for Medicine ID %d: ", id);
+            scanf("%f", &medicines[i].price);
+            printf("Enter new quantity for Medicine ID %d: ", id);
+            scanf("%d", &medicines[i].quantity);
+            saveMedicines();
+            clearScreen();
+            printf("Medicine updated successfully!\n");
+            break;
+        }
+    }
+    if (!found)
+    {
+        printf("Medicine ID not found!\n");
+    }
+    printf("\n----------------------\n");
+}
+
+void viewCustomerRegistrations()
+{
+    clearScreen();
+    if (totalCustomers == 0)
+    {
+        printf("Customer hasn't registered yet.\n");
+        printf("\n---------------------------------\n");
+        return;
+    }
+    printf("------ Customer Registration Details ------\n");
+    printf("%-20s  %-20s\n", "Username", "Email");
+    for (int i = 0; i < totalCustomers; i++)
+    {
+        printf("%-20s  %-20s\n", customers[i].username,customers[i].email);
+    }
+    printf("\n-----------------------------------------\n");
+}
+
+
+void CustomerPurchasesDetails()
+{
+    clearScreen();
+    FILE *file = fopen(FILE_PATH "buy_details.txt", "r");
+    if (file == NULL)
+    {
+        printf("--- Customer Buy Details ---\n");
+        printf("No purchase details available.\n");
+        printf("\n-------------------------------\n");
+        return;
+    }
+
+    printf("----- Customer Buy Details -----\n\n");
+    char line[256];
+    while (fgets(line, sizeof(line), file))
+    {
+        printf("%s", line);
+    }
+    fclose(file);
+    printf("\n--------------------------------\n");
+}
+
+
+int main()
+{
+    int choice, loggedIn = 0, isPharmacist = 0;
+    loadMedicines();
+    loadCustomers();
+    while (1)
+    {
+        printf("Medical Store Management System Home Page\n");
+        printf("1. Register\n");
+        printf("2. Login\n");
+        printf("3. Forgot Password\n");
+        printf("4. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+        if (choice == 1)
+        {
+            clearScreen();
+            registerCustomer();
+        }
+        else if (choice == 2)
+        {
+            clearScreen();
+            printf("1. Login as Customer\n");
+            printf("2. Login as Pharmacist\n");
+            printf("Enter your choice: ");
+            scanf("%d", &choice);
+            if (choice == 1)
+            {
+                clearScreen();
+                loggedIn = loginCustomer();
+                clearScreen();
+                if (loggedIn)
+                {
+                    printf("--------------- Login successful! ---------------\n");
+                    printf("\nWelcome To Your Account\n");
+                    while (1)
+                    {
+                        printf("\nCustomer Menu:\n");
+                        printf("1. Display Medicines\n");
+                        printf("2. Search Medicine\n");
+                        printf("3. Add to Cart\n");
+                        printf("4. Delete from Cart\n");
+                        printf("5. View Cart\n");
+                        printf("6. Buy Medicine\n");
+                        printf("7. Logout\n");
+                        printf("Enter your choice: ");
+                        scanf("%d", &choice);
+                        if (choice == 1)
+                        {
+                            displayMedicines();
+                        }
+                        else if (choice == 2)
+                        {
+                            searchMedicine();
+                        }
+                         else if (choice == 3)
+                        {
+                            addToCart();
+                        }
+                        else if (choice == 4)
+                        {
+                            deleteFromCart();
+                        }
+                        else if (choice == 5)
+                        {
+                            viewCart();
+                        }
+                        else if (choice == 6)
+                        {
+                            buyMedicine();
+                        }
+                        else if (choice == 7)
+                        {
+                            logout();
+                            break;
+                        }
+                        else
+                        {
+                            printf("Invalid choice\n");
+                        }
+                    }
+                }
+                else
+                {
+                    printf("Invalid username or password. Please try again.\n\n");
+                }
+            }
+
+            /*
+            Name: Md. Mohaiminul Islam
+            ID: 232-35-376
+            */
+
+            else if (choice == 2)
+            {
+                clearScreen();
+                isPharmacist = loginPharmacist();
+                clearScreen();
+                if (isPharmacist)
+                {
+                    printf("-----------------Login successful!-----------------\n");
+                    printf("\nWelcome To Pharmacy Portal\n");
+                    while (1)
+                    {
+                        printf("\nPharmacist Menu:\n");
+                        printf("1. Display Medicines\n");
+                        printf("2. Search Medicine\n");
+                        printf("3. Add Medicine\n");
+                        printf("4. Delete Medicine\n");
+                        printf("5. Update Medicine\n");
+                        printf("6. View Customer Purchases Details\n");
+                        printf("7. View Customer Registrations\n");
+                        printf("8. Logout\n");
+                        printf("Enter your choice: ");
+                        scanf("%d", &choice);
+                        if (choice == 1)
+                        {
+                            displayMedicines();
+                        }
+                        else if (choice == 2)
+                        {
+                            searchMedicine();
+                        }
+                         else if (choice == 3)
+                        {
+                            addMedicine();
+                        }
+                        else if (choice == 4)
+                        {
+                            deleteMedicine();
+                        }
+                        else if(choice == 5)
+                        {
+                            updateMedicine();
+                        }
+                        else if (choice == 6)
+                        {
+                            CustomerPurchasesDetails();
+                        }
+                        else if (choice == 7)
+                        {
+                            viewCustomerRegistrations();
+                        }
+                        else if (choice == 8)
+                        {
+                            logout();
+                            break;
+                        }
+                        else
+                        {
+                            printf("Invalid choice\n");
+                        }
+
+                    }
+                }
+                else
+                {
+                    printf("Invalid pharmacist password.\n\n");
+                }
+            }
+        }
+        else if(choice == 3){
+                          forgotPassword();
+        }
+        else if (choice == 4)
+        {
+            break;
+        }
+        else
+        {
+            printf("Invalid choice.\n");
+        }
+    }
+    return 0;
+}
